@@ -9,3 +9,16 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model Day {
+  id         String @id @default(cuid())
+  name       String //Segunda-feira, Terça-feira ...
+  dayOfWeek  Int //@see getDay() documentation, 0 for Sunday, 1 for Monday
+  openTime   String
+  closedTime String
+}
+
+model ClosedDay {
+  id   String   @id @default(cuid())
+  date DateTime @unique
+}
