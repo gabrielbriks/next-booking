@@ -4,9 +4,10 @@ import { CALENDAR_CLOSING_TIME, CALENDAR_OPENING_HOURS_INTERVAL, CALENDAR_OPEN_T
 import { getOpeningTimes, roundedToNearestMinutes } from '@/utils/helpers';
 import { Day } from '@prisma/client';
 import { add, format, formatISO, isBefore, parse } from 'date-fns';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import ReactCalendar from 'react-calendar';
+import { Toaster } from 'react-hot-toast';
 export interface CalendarProps {
   days: Day[];
   closedDays: string[]; //as ISO string
@@ -20,15 +21,21 @@ interface DateType {
 export function Calendar({days, closedDays}:CalendarProps) {
   const router = useRouter();
 
+  console.log('closedDays',closedDays)
+
   //Determine if today is closed
-  const today = days.find((d) => d.dayOfWeek == now.getDay());
+  const today = days.find((d) => {
+    return d.dayOfWeek == now.getDay()
+  });
+
   const rounded = roundedToNearestMinutes(now, CALENDAR_OPENING_HOURS_INTERVAL);
   const closing = parse(today!.closedTime, 'kk:mm', now);
   const tooLate = !isBefore(rounded, closing);
-  
+
+
   if(tooLate){
     closedDays.push(formatISO(new Date().setHours(0, 0, 0, 0)))
-  }
+  } 
 
   const [date, setDate] = useState<DateType>({
     justDate: null,
@@ -37,6 +44,7 @@ export function Calendar({days, closedDays}:CalendarProps) {
 
   useEffect(() => {
     if(date.dateTime){
+      alert(`Data Selecionada: ${date.dateTime.toISOString()} `)
       localStorage.setItem('selectedTime', date.dateTime.toISOString())
       //router.push('/save') //route for save scheduling
     }
@@ -61,14 +69,30 @@ export function Calendar({days, closedDays}:CalendarProps) {
     return times;
   }
 
+  console.log(closedDays);
   // const times = getTimes();
 
   const times = date.justDate && getOpeningTimes(date.justDate, days);
 
   return (
     <div className='h-screen flex flex-col justify-center items-center'>
+      <Toaster />
+      <div className='mb-10'>
+        <ReactCalendar 
+          className='REACT-CALENDAR p-2' 
+          view='month'
+          // minDate={new Date()}
+          onClickDay={(date) => setDate((prev) => ({...prev, justDate: date}) )}
+          tileDisabled={({date}) => closedDays.includes(formatISO(date))}
+          
+          locale='pt-BR'
+
+  
+        />
+      </div>
+     
       {
-        date.justDate ? (
+        date.justDate && (
           <div className='grid grid-cols-5 gap-4 '>
             {
               times?.map((time, index) => (
@@ -85,19 +109,19 @@ export function Calendar({days, closedDays}:CalendarProps) {
             }
           </div>
         )
-        :
-        (
-          <ReactCalendar 
-          className='REACT-CALENDAR p-2' 
-          view='month'
-          // minDate={new Date()}
-          onClickDay={(date) => setDate((prev) => ({...prev, justDate: date}) )}
-          tileDisabled={({date}) => closedDays.includes(formatISO(date))}
-          locale='pt-BR'
+        // :
+        // (
+        //   <ReactCalendar 
+        //   className='REACT-CALENDAR p-2' 
+        //   view='month'
+        //   // minDate={new Date()}
+        //   onClickDay={(date) => setDate((prev) => ({...prev, justDate: date}) )}
+        //   tileDisabled={({date}) => closedDays.includes(formatISO(date))}
+        //   locale='pt-BR'
 
   
-        />
-        )
+        // />
+        // )
       }
      
     </div>

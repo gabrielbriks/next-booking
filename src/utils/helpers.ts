@@ -1,6 +1,7 @@
 import { CALENDAR_OPENING_HOURS_INTERVAL, now } from '@/constants/config';
 import { Day } from '@prisma/client';
 import { add, addMinutes, getHours, getMinutes, isBefore, isEqual, parse } from "date-fns";
+import toast from 'react-hot-toast';
 export const weekDayIndexToName = (index: number) => {
   const days = [ 'domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
   return days[index];
@@ -31,7 +32,9 @@ export const getOpeningTimes = (startDate: Date, dbDays: Day[]) => {
   const today = dbDays.find((d) => d.dayOfWeek === dayOfWeek);
 
   if(!today) {
-    throw new Error('Esse dia não existe no banco de dados.');
+    toast.error('Não existe nenhum horário cadastrado para esse dia.')
+    return;
+    // throw new Error('Esse dia não existe no banco de dados.');
   }
 
   const opening = parse(today.openTime, 'kk:mm', startDate);
@@ -47,7 +50,9 @@ export const getOpeningTimes = (startDate: Date, dbDays: Day[]) => {
     const tooLate = !isBefore(rounded, closing);
 
     if(tooLate) {
-      throw new Error('Sem mais agendamentos hoje'); //no more booking today
+      toast.error('Não é possível selecionar datas anteriores');
+      return;
+      // throw new Error('Sem mais agendamentos hoje'); //no more booking today
     }
     console.log('rounded', rounded);
     
